@@ -26,62 +26,74 @@ import Clutter from 'gi://Clutter';
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 const Indicator = GObject.registerClass(
-    class Indicator extends PanelMenu.Button {
-        _init(settings) {
-            super._init(0.0, _('Panel Note'));
+class Indicator extends PanelMenu.Button {
+    _init(settings) {
+        super._init(0.0, _('Panel Note'));
+        
+        this.set_style('padding: 0px 8px;');
 
-            /* ------------------------------- Panel Note ------------------------------- */
-            let noteInPanel = new St.Label({
-                text: settings.get_string('note'),
-                y_expand: true,
-                y_align: Clutter.ActorAlign.CENTER,
-            });
-            this.add_child(noteInPanel);
+        /* ------------------------------- Panel Note ------------------------------- */
+        let noteInPanel = new St.Label({
+            text: settings.get_string('note'),
+            y_align: Clutter.ActorAlign.CENTER,
+            x_align: Clutter.ActorAlign.CENTER,
+            style_class: 'panel-note-label'  
+        });
+        this.add_child(noteInPanel);
 
+        /* ----------------------------- Note Entry Box ----------------------------- */
+        this.entry = new St.Entry({
+            text: settings.get_string('note'),
+            can_focus: true,
+            track_hover: true,
+            style_class: 'panel-note-entry'  
+        });
 
-            /* ----------------------------- Note Entry Box ----------------------------- */
-            this.entry = new St.Entry({
-                text: settings.get_string('note'),
-                can_focus: true,
-                track_hover: true
-            });
+        this.entry.set_primary_icon(new St.Icon({
+            icon_name: 'document-edit-symbolic',
+            style_class: 'popup-menu-icon',
+        }));
 
-            this.entry.set_primary_icon(new St.Icon({
-                icon_name: 'document-edit-symbolic',
-                style_class: 'popup-menu-icon',
-            }));
+        
+        this._textChangedId = this.entry.clutter_text.connect('text-changed', () => {
+            let text = this.entry.get_text();
+            settings.set_string('note', text || "No Note");
+            noteInPanel.text = text || "No Note";
+        });
 
-            this.entry.clutter_text.connect('text-changed', () => {
-                let text = this.entry.get_text();
-                if (text == "")
-                    text = "No Note";
-                settings.set_string('note', text);
-                noteInPanel.text = text;
-            });
+        let popupEdit = new PopupMenu.PopupMenuSection();
+        popupEdit.actor.add_child(this.entry);
+        this.menu.addMenuItem(popupEdit);
+        this.menu.actor.add_style_class_name('note-entry');
+    }
 
-            let popupEdit = new PopupMenu.PopupMenuSection();
-            popupEdit.actor.add_child(this.entry);
-
-            this.menu.addMenuItem(popupEdit);
-            this.menu.actor.add_style_class_name('note-entry');
+    _onDestroy() {
+        if (this._textChangedId) {
+            this.entry.clutter_text.disconnect(this._textChangedId);
+            this._textChangedId = null;
         }
-    });
+    }
+});
 
-export default class IndicatorExampleExtension extends Extension {
+export default class PanelNoteExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
         this._indicator = new Indicator(this._settings);
-        Main.panel.addToStatusArea(this.uuid, this._indicator);
+        
+        Main.panel.addToStatusArea(this.uuid, this._indicator, 1, 'right');
     }
 
     disable() {
-        this._indicator.entry.disconnect();
-        this._indicator.destroy();
-        this._indicator = null;
+        if (this._indicator) {
+            if (this._indicator._onDestroy) {
+                this._indicator._onDestroy();
+            }
+            this._indicator.destroy();
+            this._indicator = null;
+        }
         this._settings = null;
     }
 }

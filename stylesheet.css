@@ -1,4 +1,12 @@
-/* Add your custom extension styling here */
+.panel-note-label {
+    min-width: 100px;
+    font-size: 12px;
+}
+
+.panel-note-entry {
+    min-width: 200px;
+}
+
 .note-entry {
-    min-width: 20em;
+    padding: 12px;
 }
