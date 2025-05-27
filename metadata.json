@@ -2,9 +2,9 @@
   "name": "Panel Note Reloaded",
   "description": "Add a small note to your GNOME panel. This is a fork of the original Panel Note extension.",
   "uuid": "panelnote-reloaded@hes01.github.io",
-  "settings-schema": "org.gnome.shell.extensions.panelnote.reloaded",
+"settings-schema": "org.gnome.shell.extensions.panelnote-reloaded",
   "url": "https://github.com/Hes01/PanelNote-Reloaded",
-  "version": 1,
+  "version": 3,
   "shell-version": [
     "45", "46", "47", "48"
   ]
